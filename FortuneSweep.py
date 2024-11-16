@@ -1,6 +1,5 @@
-import math
 from queue import PriorityQueue
-from typing import Set, Optional, Tuple, List
+from typing import Set, Optional, Tuple
 from Beachline import Beachline, Arc
 from Circle import Point, Circle
 from Event import Event, EventKind
@@ -157,25 +156,31 @@ class FortuneSweep:
         removed_arc.left_half_edge.destination = vertex
         removed_arc.right_half_edge.origin = vertex
         
-        prev_arc.right_half_edge.origin = vertex
-        prev_arc.right_half_edge.twin.destination = vertex
+        if prev_arc:
+            prev_arc.right_half_edge.origin = vertex
+            prev_arc.right_half_edge.twin.destination = vertex
         
-        next_arc.left_half_edge.destination = vertex
-        next_arc.left_half_edge.twin.origin = vertex
+        if next_arc:
+            next_arc.left_half_edge.destination = vertex
+            next_arc.left_half_edge.twin.origin = vertex
         
-        self.connect(prev_arc.right_half_edge.twin, next_arc.left_half_edge.twin)
+        if prev_arc and next_arc:
+            self.connect(prev_arc.right_half_edge.twin, next_arc.left_half_edge.twin)
         
-        prev_rhe = self.diagram.create_half_edge(prev_arc.cell)
-        prev_rhe.destination = vertex
-        self.connect(prev_rhe, prev_arc.right_half_edge)
-        prev_arc.right_half_edge = prev_rhe
+        if prev_arc:
+            prev_rhe = self.diagram.create_half_edge(prev_arc.cell)
+            prev_rhe.destination = vertex
+            self.connect(prev_rhe, prev_arc.right_half_edge)
+            prev_arc.right_half_edge = prev_rhe
         
-        next_lhe = self.diagram.create_half_edge(next_arc.cell)
-        next_lhe.origin = vertex
-        self.connect(next_arc.left_half_edge, next_lhe)
-        next_arc.left_half_edge = next_lhe
+        if next_arc:
+            next_lhe = self.diagram.create_half_edge(next_arc.cell)
+            next_lhe.origin = vertex
+            self.connect(next_arc.left_half_edge, next_lhe)
+            next_arc.left_half_edge = next_lhe
         
-        self.make_twins(prev_arc.right_half_edge, next_arc.left_half_edge)
+        if prev_arc and next_arc:
+            self.make_twins(prev_arc.right_half_edge, next_arc.left_half_edge)
 
     def create_circle_event(self, arc: Arc):
         left = arc.prev
@@ -204,20 +209,21 @@ class FortuneSweep:
         min_arc = self.beachline.minimum
         max_arc = self.beachline.maximum
         
-        if min_arc.cell == max_arc.cell:
+        if min_arc and max_arc and min_arc.cell == max_arc.cell:
             prev = max_arc.prev
             next_arc = min_arc.next
-            max_arc.left_half_edge.destination = self.get_box_intersection(prev.point, max_arc.point, self.container)
-            min_arc.right_half_edge.origin = self.get_box_intersection(min_arc.point, next_arc.point, self.container)
-            start = min_arc.right_half_edge.origin
-            end = max_arc.left_half_edge.destination
-            if start and end:
-                head, tail = self.half_edges_chain(max_arc.cell, self.container, end, start)
-                self.connect(max_arc.left_half_edge, head)
-                self.connect(tail, min_arc.right_half_edge)
+            if prev and next_arc:
+                max_arc.left_half_edge.destination = self.get_box_intersection(prev.point, max_arc.point, self.container)
+                min_arc.right_half_edge.origin = self.get_box_intersection(min_arc.point, next_arc.point, self.container)
+                start = min_arc.right_half_edge.origin
+                end = max_arc.left_half_edge.destination
+                if start and end:
+                    head, tail = self.half_edges_chain(max_arc.cell, self.container, end, start)
+                    self.connect(max_arc.left_half_edge, head)
+                    self.connect(tail, min_arc.right_half_edge)
         
         for cell in self.diagram.cells:
-            if not cell.outer_component.prev or not cell.outer_component.next:
+            if not cell.outer_component or not cell.outer_component.prev or not cell.outer_component.next:
                 self.complete_incomplete_cell(cell)
             self.clip_cell(cell, self.clipper)
 
@@ -234,8 +240,12 @@ class FortuneSweep:
             last = last.next
         
         clipper = self.container.to_clipper()
-        last.destination = lb_clip(last.to_segment(), clipper).result_segment.b
-        first.origin = lb_clip(first.to_segment(), clipper).result_segment.a
+        last_segment = lb_clip(last.to_segment(), clipper)
+        if last_segment and last_segment.result_segment:
+            last.destination = last_segment.result_segment.b
+        first_segment = lb_clip(first.to_segment(), clipper)
+        if first_segment and first_segment.result_segment:
+            first.origin = first_segment.result_segment.a
         
         start = last.destination
         end = first.origin

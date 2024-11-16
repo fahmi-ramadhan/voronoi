@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import List, Tuple, Optional, Dict
-from math import sqrt
 from LiangBarsky import Clipper
 from Site import Site
 from Size import Size

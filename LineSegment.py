@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from math import sqrt
-
-# Small value for floating-point comparisons
-eps = 1e-10
+from Precision import eps
 
 @dataclass
 class Site:

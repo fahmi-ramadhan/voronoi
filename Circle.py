@@ -3,7 +3,6 @@ from math import hypot
 from typing import Optional
 from Site import Site
 
-# Type aliases
 Point = Site
 
 @dataclass

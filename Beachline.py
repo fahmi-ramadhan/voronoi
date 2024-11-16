@@ -1,4 +1,5 @@
 from Parabola import Parabola
+from Precision import eps
 
 class Arc:
     def __init__(self, point=None):
@@ -234,7 +235,6 @@ class Beachline:
         self.insert_fixup(x)
 
     def insert_arc_for_point(self, p):
-        eps = 1e-10  # Define small epsilon for floating point comparison
         mid = Arc(point=p)
         x = self.root
         found = False
