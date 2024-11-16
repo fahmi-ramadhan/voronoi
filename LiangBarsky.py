@@ -56,12 +56,12 @@ def lb_clip(line: LineSegment, clipper: Clipper) -> LiangBarskyResult:
         elif edge == ClipperEdge.RIGHT:
             p = dx
             q = (clipper.right - line.a.x)
-        elif edge == ClipperEdge.TOP:
+        elif edge == ClipperEdge.BOTTOM:
             p = -dy
-            q = -(clipper.top - line.a.y)
-        else:  # BOTTOM
+            q = -(clipper.bottom - line.a.y)
+        else:  # TOP
             p = dy
-            q = (clipper.bottom - line.a.y)
+            q = (clipper.top - line.a.y)
         
         if p == 0 and q < 0:
             # Don't draw line at all (parallel line outside)
