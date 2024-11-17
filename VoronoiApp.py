@@ -4,7 +4,8 @@ from FortuneSweep import FortuneSweep
 from Diagram import Diagram
 from Rectangle import Rectangle
 from Circle import Point
-from math import hypot
+from Precision import eps
+from scipy.spatial import KDTree
 
 class MainWindow:
     # radius of drawn points on canvas
@@ -29,10 +30,6 @@ class MainWindow:
         # Add clear button
         self.btnClear = tk.Button(self.frmButtons, text="Clear All", command=self.clear_canvas)
         self.btnClear.pack(side=tk.LEFT, padx=5, pady=5)
-        
-        # Add largest empty circle button
-        self.btnLargestCircle = tk.Button(self.frmButtons, text="Largest Empty Circle", command=self.find_largest_empty_circle)
-        self.btnLargestCircle.pack(side=tk.LEFT, padx=5, pady=5)
         
         # Create canvas
         self.canvas = tk.Canvas(self.frmMain, width=500, height=500, bg="white")
@@ -100,6 +97,15 @@ class MainWindow:
             self.sweep.compute(sites, self.diagram, self.clipping_rect)
             self.draw_voronoi()
 
+            print("Cells:")
+            for cell in self.diagram.cells:
+                print(f"Site: {cell.site}")
+                print(f"Vertices (Counter-Clockwise): {cell.hull_vertices_ccw()}")
+
+            print("\nVertices:")
+            for vertex in self.diagram.vertices:
+                print(f"Vertex: {vertex}")
+
     def draw_voronoi(self):
         self.canvas.delete(tk.ALL)
         for cell in self.diagram.cells:
@@ -117,33 +123,40 @@ class MainWindow:
         for point in self.points:
             self.canvas.create_oval(point.x - self.RADIUS, point.y - self.RADIUS, 
                                     point.x + self.RADIUS, point.y + self.RADIUS, fill="black")
+        
+        site_coords = [(point.x, point.y) for point in self.points]
+        tree = KDTree(site_coords)
 
-    def find_largest_empty_circle(self):
-        """Find and draw the largest empty circle in the Voronoi diagram."""
-        if not self.diagram.cells:
-            return
-        
-        largest_circle = None
-        max_radius = 0
-        
-        for cell in self.diagram.cells:
-            he = cell.outer_component
-            while he:
-                if he.origin:
-                    # Ensure the center of the circle is within the bounding box
-                    if (self.clipping_rect.tl.x <= he.origin.x <= self.clipping_rect.tr.x and
-                        self.clipping_rect.tl.y <= he.origin.y <= self.clipping_rect.bl.y):
-                        radius = min(hypot(he.origin.x - site.x, he.origin.y - site.y) for site in self.points)
-                        if radius > max_radius:
-                            max_radius = radius
-                            largest_circle = (he.origin.x, he.origin.y, radius)
-                he = he.next
-                if he == cell.outer_component:
-                    break
-        
-        if largest_circle:
-            x, y, radius = largest_circle
-            self.canvas.create_oval(x - radius, y - radius, x + radius, y + radius, outline="red", tags="largest_circle")
+        for vertex in self.diagram.vertices:
+            print(vertex.x, vertex.y)
+            self.canvas.create_oval(vertex.x - 1.5, vertex.y - 1.5, 
+                                    vertex.x + 1.5, vertex.y + 1.5, fill="red", outline="red", tags="vertex")
+
+        centers = []
+        radiuses = []
+        max_radius = -1
+        for vertex in self.diagram.vertices:
+            vx, vy = vertex.x, vertex.y
+            
+            distances, indices = tree.query((vx, vy), k=5)  
+            
+            radius = distances[0]
+            close_sites = [(site_coords[i][0], site_coords[i][1]) for i, d in zip(indices, distances) if abs(d - radius) < eps]
+
+            if len(close_sites) >= 3:
+                # Draw the circle
+                centers.append((vx, vy))
+                radiuses.append(radius)
+                max_radius = max(radius, max_radius)
+
+        for i in range(len(centers)):
+            radius = radiuses[i]
+            if radius == max_radius:
+                vx = centers[i][0]
+                vy = centers[i][1]
+                self.canvas.create_oval(vx - radius, vy - radius, vx + radius, vy + radius,
+                                        outline="orange", tags="largest_empty_circle")
+
             
 def main():
     root = tk.Tk()

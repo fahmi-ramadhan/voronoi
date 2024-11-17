@@ -76,7 +76,7 @@ class FortuneSweep:
             self.diagram.create_cell(root)
             return
         
-        if self.first_site_y == self.sweep_line_y:
+        if self.first_site_y is not None and abs(self.first_site_y - self.sweep_line_y) < 1.0:
             self.container.expand_to_contain_point(event.point)
             y_val = -1000000
             arc = self.beachline.handle_special_arc_insertion_case(event.point)
@@ -150,6 +150,7 @@ class FortuneSweep:
 
     def create_vertex(self, vertex: Point, removed_arc: Arc):
         self.container.expand_to_contain_point(vertex)
+        self.diagram.vertices.append(vertex)
         prev_arc = removed_arc.prev
         next_arc = removed_arc.next
         
