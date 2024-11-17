@@ -1,53 +1,64 @@
 from dataclasses import dataclass
 from math import sqrt
 from Precision import eps
-
-@dataclass
-class Site:
-    """Represents a point in 2D space."""
-    x: float
-    y: float
+from Site import Site
 
 @dataclass
 class LineSegment:
-    """Represents a line segment between two points in 2D space.
+    """
+    Merepresentasikan sebuah segmen garis antara dua titik dalam ruang 2D.
     
     Attributes:
-        a (Site): First endpoint of the line segment
-        b (Site): Second endpoint of the line segment
+        a: Titik ujung pertama dari segmen garis
+        b: Titik ujung kedua dari segmen garis
     """
     a: Site
     b: Site
     
     def contains_point(self, point: Site) -> bool:
-        """Check if a point lies on the line segment.
+        """
+        Memeriksa apakah suatu titik terletak pada segmen garis.
+        
+        Method ini menggunakan pendekatan berikut:
+        1. Untuk garis vertikal, periksa apakah x koordinat titik sama dengan x garis
+           dan y koordinat berada di antara kedua ujung garis
+        2. Untuk garis lainnya, hitung gradien (k) dan intersep-y (c),
+           kemudian periksa apakah titik memenuhi persamaan garis y = kx + c
         
         Args:
-            point (Site): The point to check
+            point: Titik yang akan diperiksa
             
         Returns:
-            bool: True if the point lies on the line segment, False otherwise
+            True jika titik terletak pada segmen garis, False jika tidak
+        
+        Note:
+            Menggunakan nilai epsilon (eps) untuk perbandingan floating-point
+            untuk mengatasi masalah presisi numerik
         """
-        # Special case for vertical lines
+        # Kasus khusus untuk garis vertikal
         if abs(self.b.x - self.a.x) < eps:
             return (
-                abs(point.x - self.a.x) < eps
-                and point.y >= min(self.a.y, self.b.y)
+                abs(point.x - self.a.x) < eps  # x koordinat sama
+                and point.y >= min(self.a.y, self.b.y)  # y di antara kedua ujung
                 and point.y <= max(self.a.y, self.b.y)
             )
         
-        # Calculate slope and y-intercept
+        # Hitung gradien dan intersep-y
         k = (self.b.y - self.a.y) / (self.b.x - self.a.x)
         c = self.a.y - k * self.a.x
         
-        # Check if point lies on the line
+        # Periksa apakah titik terletak pada garis
         return abs(point.y - (point.x * k + c)) < eps
     
     def length(self) -> float:
-        """Calculate the length of the line segment.
+        """
+        Menghitung panjang segmen garis menggunakan rumus jarak Euclidean.
+        
+        Formula yang digunakan:
+        length = sqrt((x₁-x₂)² + (y₁-y₂)²)
         
         Returns:
-            float: The length of the line segment
+            Panjang segmen garis dalam satuan yang sama dengan koordinat input
         """
         x_dist = self.a.x - self.b.x
         y_dist = self.a.y - self.b.y

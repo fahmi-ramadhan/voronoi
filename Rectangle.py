@@ -7,7 +7,6 @@ from Size import Size
 from Vector import Vector2D
 from LineSegment import LineSegment
 
-# Main Rectangle implementation
 class RectangleEdge(Enum):
     TOP = auto()
     RIGHT = auto()
@@ -16,6 +15,18 @@ class RectangleEdge(Enum):
 
 @dataclass
 class Rectangle:
+    """
+    Kelas yang merepresentasikan persegi panjang dalam ruang 2D.
+    
+    Persegi panjang didefinisikan oleh titik origin (pojok kiri atas) 
+    dan ukurannya (lebar dan tinggi).
+    
+    Attributes:
+        x (float): Koordinat x dari titik origin
+        y (float): Koordinat y dari titik origin
+        width (float): Lebar persegi panjang
+        height (float): Tinggi persegi panjang
+    """
     x: float
     y: float
     width: float
@@ -23,6 +34,16 @@ class Rectangle:
     
     @classmethod
     def from_origin_and_size(cls, origin: 'Site', size: Size) -> 'Rectangle':
+        """
+        Membuat instance Rectangle dari titik origin dan ukuran.
+        
+        Args:
+            origin: Titik origin (pojok kiri atas)
+            size: Ukuran persegi panjang (lebar dan tinggi)
+            
+        Returns:
+            Instance Rectangle baru
+        """
         return cls(
             x=origin.x,
             y=origin.y,
@@ -32,29 +53,42 @@ class Rectangle:
     
     @property
     def tl(self) -> 'Site':
+        """Mendapatkan titik pojok kiri atas."""
         return Site(x=self.x, y=self.y)
     
     @property
     def bl(self) -> 'Site':
+        """Mendapatkan titik pojok kiri bawah."""
         return Site(x=self.tl.x, y=self.tl.y + self.height)
     
     @property
     def tr(self) -> 'Site':
+        """Mendapatkan titik pojok kanan atas."""
         return Site(x=self.tl.x + self.width, y=self.tl.y)
     
     @property
     def br(self) -> 'Site':
+        """Mendapatkan titik pojok kanan bawah."""
         return Site(x=self.tl.x + self.width, y=self.tl.y + self.height)
     
     @property
     def origin(self) -> 'Site':
+        """Mendapatkan titik origin (pojok kiri atas)."""
         return self.tl
     
     @property
     def size(self) -> Size:
+        """Mendapatkan ukuran persegi panjang."""
         return Size(width=self.width, height=self.height)
     
     def expand_to_contain_point(self, p: 'Site', padding: float = 20.0) -> None:
+        """
+        Memperluas persegi panjang untuk mencakup titik yang diberikan.
+        
+        Args:
+            p: Titik yang akan dicakup
+            padding: Jarak tambahan dari titik ke tepi persegi panjang
+        """
         if p.x <= self.origin.x:
             self.width += abs(self.x - p.x + padding)
             self.x = p.x - padding
@@ -70,6 +104,15 @@ class Rectangle:
             self.height = p.y - self.y + padding
     
     def get_line(self, edge: RectangleEdge) -> LineSegment:
+        """
+        Mendapatkan segmen garis untuk sisi yang ditentukan.
+        
+        Args:
+            edge: Sisi persegi panjang yang diinginkan
+            
+        Returns:
+            Segmen garis yang merepresentasikan sisi
+        """
         if edge == RectangleEdge.TOP:
             return LineSegment(a=self.tr, b=self.tl)
         elif edge == RectangleEdge.RIGHT:
@@ -80,6 +123,12 @@ class Rectangle:
             return LineSegment(a=self.tl, b=self.bl)
             
     def get_edges(self) -> List[LineSegment]:
+        """
+        Mendapatkan semua sisi persegi panjang sebagai segmen garis.
+        
+        Returns:
+            List segmen garis yang merepresentasikan semua sisi
+        """
         return [
             self.get_line(RectangleEdge.TOP),
             self.get_line(RectangleEdge.LEFT),
@@ -89,6 +138,16 @@ class Rectangle:
     
     @classmethod
     def rect_from_source(cls, source_rect: 'Rectangle', padding: float) -> 'Rectangle':
+        """
+        Membuat persegi panjang baru dengan padding dari persegi panjang sumber.
+        
+        Args:
+            source_rect: Persegi panjang sumber
+            padding: Jarak padding yang akan ditambahkan ke semua sisi
+            
+        Returns:
+            Instance Rectangle baru yang lebih besar
+        """
         return cls(
             x=source_rect.tl.x - padding,
             y=source_rect.tl.y - padding,
@@ -97,12 +156,34 @@ class Rectangle:
         )
     
     def contains(self, point: Optional['Site']) -> bool:
+        """
+        Memeriksa apakah suatu titik berada di dalam persegi panjang.
+        
+        Args:
+            point: Titik yang akan diperiksa
+            
+        Returns:
+            True jika titik berada di dalam persegi panjang, False jika tidak
+        """
         if point is None:
             return False
         return (point.x >= self.tl.x and point.x <= self.tr.x and 
                 point.y >= self.tl.y and point.y <= self.br.y)
     
     def intersection(self, origin: 'Site', direction: 'Vector2D') -> Tuple['Site', RectangleEdge]:
+        """
+        Menghitung titik perpotongan garis dengan persegi panjang.
+        
+        Args:
+            origin: Titik awal garis
+            direction: Vektor arah garis
+            
+        Returns:
+            Tuple berisi titik perpotongan dan sisi yang dipotong
+            
+        Raises:
+            AssertionError: Jika tidak ditemukan perpotongan
+        """
         point: Optional['Site'] = None
         edge: Optional[RectangleEdge] = None
         t = float('inf')
@@ -135,6 +216,15 @@ class Rectangle:
         return point, edge
     
     def _get_next_ccw(self, edge: RectangleEdge) -> Tuple[RectangleEdge, 'Site']:
+        """
+        Mendapatkan sisi dan titik pojok berikutnya dalam urutan berlawanan arah jarum jam.
+        
+        Args:
+            edge: Sisi saat ini
+            
+        Returns:
+            Tuple berisi sisi berikutnya dan titik pojok berikutnya
+        """
         if edge == RectangleEdge.LEFT:
             return (RectangleEdge.BOTTOM, self.bl)
         elif edge == RectangleEdge.BOTTOM:
@@ -145,6 +235,15 @@ class Rectangle:
             return (RectangleEdge.LEFT, self.tl)
             
     def side_for_point(self, p: 'Site') -> Optional[RectangleEdge]:
+        """
+        Menentukan pada sisi mana suatu titik berada.
+        
+        Args:
+            p: Titik yang akan diperiksa
+            
+        Returns:
+            Sisi di mana titik berada, atau None jika titik tidak berada pada sisi mana pun
+        """
         segments: Dict[RectangleEdge, LineSegment] = {
             RectangleEdge.TOP: self.get_line(RectangleEdge.TOP),
             RectangleEdge.RIGHT: self.get_line(RectangleEdge.RIGHT),
@@ -158,6 +257,16 @@ class Rectangle:
         return None
     
     def ccw_traverse(self, start_edge: RectangleEdge, end_edge: RectangleEdge) -> List['Site']:
+        """
+        Melakukan traversal titik-titik pojok dari sisi awal ke sisi akhir berlawanan arah jarum jam.
+        
+        Args:
+            start_edge: Sisi awal traversal
+            end_edge: Sisi akhir traversal
+            
+        Returns:
+            List titik-titik pojok yang dilewati
+        """
         points = []
         edge = start_edge
         while edge != end_edge:
@@ -167,6 +276,16 @@ class Rectangle:
         return points
     
     def get_rect_polyline_for_ccw(self, start: 'Site', end: 'Site') -> List['Site']:
+        """
+        Mendapatkan polyline yang menghubungkan dua titik pada persegi panjang berlawanan arah jarum jam.
+        
+        Args:
+            start: Titik awal pada persegi panjang
+            end: Titik akhir pada persegi panjang
+            
+        Returns:
+            List titik-titik yang membentuk polyline
+        """
         result = []
         start_edge = self.side_for_point(start)
         end_edge = self.side_for_point(end)
@@ -187,6 +306,12 @@ class Rectangle:
         return result
     
     def to_clipper(self) -> Clipper:
+        """
+        Mengkonversi persegi panjang ke objek Clipper untuk clipping.
+        
+        Returns:
+            Objek Clipper yang merepresentasikan persegi panjang
+        """
         return Clipper(
             left=self.tl.x,
             right=self.tr.x,

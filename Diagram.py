@@ -5,25 +5,22 @@ from Beachline import Arc
 from Site import Site
 from LineSegment import LineSegment
 
-# Type aliases
 Vertex = Site
-Point = Site
 
 class HalfEdge:
     """
-    The half-edge record of a half-edge e stores pointers to:
+    half-edge menyimpan pointer ke:
     - Origin(e)
     - Twin of e
-    - The face to its left (IncidentFace(e))
-    - Next(e): next half-edge on the boundary of IncidentFace(e)
-    - Previous(e): previous half-edge
+    - Face sebelah kirinya (IncidentFace(e))
+    - Next(e): half-edge berikutnya pada batas IncidentFace(e)
+    - Previous(e): half-edge sebelumnya pada batas IncidentFace(e)
     """
     def __init__(self):
-        self.satellite: Any = None
         self.origin: Optional[Vertex] = None
         self.destination: Optional[Vertex] = None
         
-        # Using weak references for cyclic references
+        # Menggunakan weak references untuk referensi siklik
         self._twin: Optional[ReferenceType[HalfEdge]] = None
         self._incident_face: Optional[ReferenceType[Cell]] = None
         self._prev: Optional[ReferenceType[HalfEdge]] = None
@@ -54,30 +51,29 @@ class HalfEdge:
         self._prev = ref(value) if value is not None else None
     
     def to_segment(self) -> Optional[LineSegment]:
-        """Returns a line segment representation of the half-edge"""
+        """Mengembalikan representasi line segment dari half-edge"""
         if self.origin is None or self.destination is None:
             return None
         return LineSegment(a=self.origin, b=self.destination)
 
 class Cell:
     """
-    Stores pointer to:
-    - outerComponent linked list (looped when diagram is built)
+    Menyimpan pointer ke:
+    - outerComponent linked list
     - site - pointer to the site
     """
     def __init__(self, site: Site):
-        self.satellite: Any = None
         self.outer_component: Optional[HalfEdge] = None
         self.site: Site = site
     
     def __del__(self):
-        """Clean up circular references"""
+        """Membersihkan referensi siklik"""
         if self.outer_component:
             self.outer_component.next = None
             self.outer_component.prev = None
     
     def hull_vertices_ccw(self) -> List[Vertex]:
-        """Returns cell vertices in counter-clockwise order"""
+        """Mengembalikan vertex sel dalam urutan berlawanan arah jarum jam"""
         vertices = []
         if not self.outer_component:
             return vertices
@@ -93,7 +89,7 @@ class Cell:
         return vertices
     
     def neighbours(self) -> List['Cell']:
-        """Returns all the neighbours of specific cell"""
+        """Mengembalikan semua sel tetangga dari sel tertentu"""
         neighbours = []
         if not self.outer_component:
             return neighbours
@@ -109,13 +105,13 @@ class Cell:
         return neighbours
 
 class Diagram:
-    """Main class for storing the Voronoi diagram structure"""
+    """Kelas utama untuk menyimpan struktur diagram Voronoi"""
     def __init__(self):
         self.cells: List[Cell] = []
         self.vertices: List[Vertex] = []
     
     def create_cell(self, arc: 'Arc') -> None:
-        """Creates a new cell for the given arc"""
+        """Membuat sel baru untuk busur yang diberikan"""
         if arc.point is None:
             return
         cell = Cell(site=arc.point)
@@ -123,7 +119,7 @@ class Diagram:
         arc.cell = cell
     
     def create_half_edge(self, cell: Cell) -> HalfEdge:
-        """Creates a new half-edge associated with the given cell"""
+        """Membuat half-edge baru yang terkait dengan sel yang diberikan"""
         he = HalfEdge()
         if cell.outer_component is None:
             cell.outer_component = he
@@ -131,6 +127,6 @@ class Diagram:
         return he
     
     def clear(self) -> None:
-        """Clears all cells and vertices from the diagram"""
+        """Menghapus semua sel dan vertex dari diagram"""
         self.cells.clear()
         self.vertices.clear()

@@ -1,7 +1,7 @@
 import random
 import argparse
 
-def generate_random_points(num_points, min_x=0, max_x=500, min_y=0, max_y=500, filename="input.txt"):
+def generate_random_points(num_points, min_x=0, max_x=1400, min_y=0, max_y=720, filename="input.txt"):
     """
     Generate random points for a Voronoi diagram and save them to a file.
     
@@ -35,9 +35,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate random points for Voronoi diagram')
     parser.add_argument('num_points', type=int, help='Number of points to generate')
     parser.add_argument('--min-x', type=int, default=50, help='Minimum x coordinate (default: 50)')
-    parser.add_argument('--max-x', type=int, default=450, help='Maximum x coordinate (default: 450)')
+    parser.add_argument('--max-x', type=int, default=1400, help='Maximum x coordinate (default: 1400)')
     parser.add_argument('--min-y', type=int, default=50, help='Minimum y coordinate (default: 50)')
-    parser.add_argument('--max-y', type=int, default=450, help='Maximum y coordinate (default: 450)')
+    parser.add_argument('--max-y', type=int, default=700, help='Maximum y coordinate (default: 700)')
     parser.add_argument('--output', type=str, default='input.txt', help='Output filename (default: input.txt)')
     
     # Parse arguments

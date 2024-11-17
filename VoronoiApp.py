@@ -32,7 +32,7 @@ class MainWindow:
         self.btnClear.pack(side=tk.LEFT, padx=5, pady=5)
         
         # Create canvas
-        self.canvas = tk.Canvas(self.frmMain, width=500, height=500, bg="white")
+        self.canvas = tk.Canvas(self.frmMain, width=1440, height=720, bg="white")
         self.canvas.pack()
         
         self.canvas.bind('<Button-1>', self.on_click)
@@ -40,7 +40,7 @@ class MainWindow:
         self.points = []
         self.points_set = set()
         self.diagram = Diagram()
-        self.clipping_rect = Rectangle(0, 0, 500, 500)
+        self.clipping_rect = Rectangle(0, 0, 1440, 720)
         self.sweep = FortuneSweep()
 
     def clear_canvas(self):

@@ -5,6 +5,14 @@ from LineSegment import LineSegment
 from Site import Site
 
 class LiangBarskyResult(NamedTuple):
+    """
+    Kelas untuk menyimpan hasil dari algoritma pemotongan Liang-Barsky.
+    
+    Attributes:
+        is_origin_clipped: Menandakan apakah titik awal garis terpotong
+        is_destination_clipped: Menandakan apakah titik akhir garis terpotong
+        result_segment: Segmen garis hasil pemotongan, bernilai None jika garis sepenuhnya di luar area
+    """
     is_origin_clipped: bool
     is_destination_clipped: bool
     result_segment: Optional[LineSegment]
@@ -17,6 +25,9 @@ class ClipperEdge(Enum):
 
 @dataclass
 class Clipper:
+    """
+    Kelas yang mendefinisikan persegi panjang pembatas untuk proses pemotongan.
+    """
     left: float
     right: float
     top: float
@@ -24,32 +35,40 @@ class Clipper:
 
 def lb_clip(line: LineSegment, clipper: Clipper) -> LiangBarskyResult:
     """
-    Liang-Barsky line clipping algorithm implementation
-    Based on:
-    - Liang-Barsky function by Daniel White
-      http://www.skytopia.com/project/articles/compsci/clipping.html
-    - Paper
-      https://www.cs.helsinki.fi/group/goa/viewing/leikkaus/intro.html
+    Implementasi algoritma pemotongan garis Liang-Barsky.
+    
+    Fungsi ini memotong sebuah segmen garis terhadap persegi panjang pembatas
+    menggunakan algoritma Liang-Barsky. Algoritma ini menghitung parameter t0 dan t1
+    yang menentukan bagian garis yang berada di dalam area pembatas.
     
     Args:
-        line: The line segment to clip
-        clipper: The clipping rectangle
+        line: Objek LineSegment yang merepresentasikan garis yang akan dipotong
+        clipper: Objek Clipper yang mendefinisikan persegi panjang pembatas
     
     Returns:
-        A tuple containing:
-        - Whether the origin point was clipped
-        - Whether the destination point was clipped
-        - The resulting clipped line segment (or None if completely outside)
+        LiangBarskyResult yang berisi informasi hasil pemotongan:
+        - is_origin_clipped: True jika titik awal garis terpotong
+        - is_destination_clipped: True jika titik akhir garis terpotong
+        - result_segment: Segmen garis hasil pemotongan, None jika garis di luar area
+    
+    Referensi:
+        - Implementasi Liang-Barsky oleh Daniel White:
+          http://www.skytopia.com/project/articles/compsci/clipping.html
     """
-    t0 = 0.0
-    t1 = 1.0
+    t0 = 0.0  # Parameter awal garis
+    t1 = 1.0  # Parameter akhir garis
+    
+    # Menghitung perbedaan koordinat x dan y
     dx = line.b.x - line.a.x
     dy = line.b.y - line.a.y
     
+    # Penanda apakah titik awal dan akhir terpotong
     is_origin_clipped = False
     is_destination_clipped = False
     
+    # Iterasi untuk setiap sisi persegi pembatas
     for edge in ClipperEdge:
+        # Menghitung parameter p dan q berdasarkan sisi yang diproses
         if edge == ClipperEdge.LEFT:
             p = -dx
             q = -(clipper.left - line.a.x)
@@ -63,31 +82,31 @@ def lb_clip(line: LineSegment, clipper: Clipper) -> LiangBarskyResult:
             p = dy
             q = (clipper.top - line.a.y)
         
+        # Kasus khusus: garis sejajar dengan sisi dan di luar area
         if p == 0 and q < 0:
-            # Don't draw line at all (parallel line outside)
             return LiangBarskyResult(False, False, None)
         
         if p != 0:
-            r = q / p
+            r = q / p  # Menghitung parameter potong
             
             if p < 0:
                 if r > t1:
-                    # Don't draw line at all
+                    # Garis sepenuhnya di luar area
                     return LiangBarskyResult(False, False, None)
                 elif r > t0:
-                    # Line is clipped!
+                    # Titik awal terpotong
                     is_origin_clipped = True
                     t0 = r
             elif p > 0:
                 if r < t0:
-                    # Don't draw line at all
+                    # Garis sepenuhnya di luar area
                     return LiangBarskyResult(False, False, None)
                 elif r < t1:
-                    # Line is clipped!
+                    # Titik akhir terpotong
                     is_destination_clipped = True
                     t1 = r
     
-    # Calculate clipped line segment
+    # Menghitung koordinat titik-titik hasil pemotongan
     clipped_segment = LineSegment(
         a=Site(
             x=line.a.x + t0 * dx,
