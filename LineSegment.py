@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from math import sqrt
-from Precision import eps
+from Constant import eps
 from Site import Site
 
 @dataclass
@@ -49,17 +48,3 @@ class LineSegment:
         
         # Periksa apakah titik terletak pada garis
         return abs(point.y - (point.x * k + c)) < eps
-    
-    def length(self) -> float:
-        """
-        Menghitung panjang segmen garis menggunakan rumus jarak Euclidean.
-        
-        Formula yang digunakan:
-        length = sqrt((x₁-x₂)² + (y₁-y₂)²)
-        
-        Returns:
-            Panjang segmen garis dalam satuan yang sama dengan koordinat input
-        """
-        x_dist = self.a.x - self.b.x
-        y_dist = self.a.y - self.b.y
-        return sqrt(x_dist * x_dist + y_dist * y_dist)

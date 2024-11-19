@@ -1,113 +1,145 @@
+# TUGAS PEMROGRAMAN GEOMETRI KOMPUTASIONAL
+#
+# Kelompok 12: - Fahmi Ramadhan (2206026473)
+#              - Muhammad Nabiel Subhan (2206081553)
+#              - Ken Balya (2206081811)
+#
+# Referensi: - https://www.slideshare.net/slideshow/fortunes-algorithm/238607094#33
+#            - https://github.com/fewlinesofcode/FortunesAlgorithm
+
+
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from FortuneSweep import FortuneSweep
+from FortunesAlgo import FortunesAlgo
 from Diagram import Diagram
 from Rectangle import Rectangle
 from Circle import Point
-from Precision import eps
+from Constant import eps
 from scipy.spatial import KDTree
 
 class MainWindow:
-    # radius of drawn points on canvas
+    """
+    Jendela utama untuk visualisasi diagram Voronoi.
+    
+    Kelas ini mengimplementasikan aplikasi GUI yang memungkinkan pengguna untuk:
+    - Membuat diagram Voronoi dengan mengklik titik-titik pada canvas
+    - Memuat titik-titik dari file
+    - Memvisualisasikan diagram Voronoi dengan sel dan vertex
+    - Menemukan dan menampilkan lingkaran kosong terbesar di antara titik-titik
+    
+    Atribut:
+        RADIUS (int): Radius titik yang digambar pada canvas (dalam piksel)
+    """
+    
     RADIUS = 3
 
     def __init__(self, master):
         self.master = master
         self.master.title("Voronoi")
         
-        # Create main frame
+        # Membuat frame utama untuk menampung semua komponen
         self.frmMain = tk.Frame(self.master, relief=tk.RAISED, borderwidth=1)
         self.frmMain.pack(fill=tk.BOTH, expand=1)
         
-        # Create button frame
+        # Membuat frame untuk tombol-tombol di bagian atas
         self.frmButtons = tk.Frame(self.frmMain)
         self.frmButtons.pack(fill=tk.X)
         
-        # Add load button
+        # Menambahkan tombol untuk memuat titik dari file
         self.btnLoad = tk.Button(self.frmButtons, text="Load Points", command=self.load_points)
         self.btnLoad.pack(side=tk.LEFT, padx=5, pady=5)
         
-        # Add clear button
+        # Menambahkan tombol untuk membersihkan canvas
         self.btnClear = tk.Button(self.frmButtons, text="Clear All", command=self.clear_canvas)
         self.btnClear.pack(side=tk.LEFT, padx=5, pady=5)
         
-        # Create canvas
+        # Membuat canvas utama untuk menggambar
         self.canvas = tk.Canvas(self.frmMain, width=1440, height=720, bg="white")
         self.canvas.pack()
         
+        # Menghubungkan klik kiri mouse dengan pembuatan titik
         self.canvas.bind('<Button-1>', self.on_click)
         
-        self.points = []
-        self.points_set = set()
-        self.diagram = Diagram()
-        self.clipping_rect = Rectangle(0, 0, 1440, 720)
-        self.sweep = FortuneSweep()
+        # Inisialisasi struktur data
+        self.points = []  # Daftar titik untuk akses berurutan
+        self.diagram = Diagram()  # Struktur diagram Voronoi
+        self.clipping_rect = Rectangle(0, 0, 1440, 720)  # Area pembatas diagram
+        self.sweep = FortunesAlgo()  # Algoritma Fortune's sweep line untuk membuat diagram Voronoi
 
     def clear_canvas(self):
-        """Clear all points and reset the canvas."""
+        """Membersihkan semua titik dan mereset canvas."""
         self.points = []
-        self.points_set = set()
         self.canvas.delete(tk.ALL)
 
     def load_points(self):
-        """Load points from a text file."""
+        """
+        Memuat titik-titik dari file teks.
+        Format file yang diharapkan: setiap baris berisi koordinat x,y atau x y
+        """
         try:
             filename = filedialog.askopenfilename(
                 filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")]
             )
-            if not filename:  # User canceled
+            if not filename:  # Pengguna membatalkan
                 return
                 
             with open(filename, 'r') as file:
-                # Clear existing points
+                # Membersihkan titik-titik yang ada
                 self.points = []
-                self.points_set = set()
                 
-                # Read points from file
+                # Membaca titik-titik dari file
                 for line in file:
                     try:
-                        # Expecting format: "x,y" or "x y"
+                        # Format yang diharapkan: "x,y" atau "x y"
                         coords = line.strip().replace(',', ' ').split()
                         if len(coords) == 2:
                             x, y = map(float, coords)
                             point = Point(x, y)
-                            if point not in self.points_set:
-                                self.points.append(point)
-                                self.points_set.add(point)
+                            self.points.append(point)
                     except ValueError:
-                        print(f"Skipping invalid line: {line.strip()}")
+                        print(f"Melewati baris yang tidak valid: {line.strip()}")
                 
-            # Update the diagram
+            # Memperbarui diagram
             self.update_voronoi_diagram()
             
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to load points: {str(e)}")
+            messagebox.showerror("Error", f"Gagal memuat titik-titik: {str(e)}")
 
     def on_click(self, event):
+        """
+        Menangani event klik mouse pada canvas.
+        Menambahkan titik baru dan memperbarui diagram Voronoi.
+        
+        Args:
+            event: Event klik mouse
+        """
         point = Point(event.x, event.y)
-        if point not in self.points_set:
-            self.points.append(point)
-            self.points_set.add(point)
-            self.update_voronoi_diagram()
+        self.points.append(point)
+        self.update_voronoi_diagram()
 
     def update_voronoi_diagram(self):
-        if self.points:  # Only update if there are points
+        """
+        Memperbarui diagram Voronoi berdasarkan titik-titik yang ada.
+        Mencetak informasi sel dan vertex ke konsol.
+        """
+        if self.points:  # Hanya memperbarui jika ada titik
             self.diagram.clear()
             sites = set(self.points)
             self.sweep.compute(sites, self.diagram, self.clipping_rect)
             self.draw_voronoi()
 
-            print("Cells:")
-            for cell in self.diagram.cells:
-                print(f"Site: {cell.site}")
-                print(f"Vertices (Counter-Clockwise): {cell.hull_vertices_ccw()}")
-
-            print("\nVertices:")
-            for vertex in self.diagram.vertices:
-                print(f"Vertex: {vertex}")
-
     def draw_voronoi(self):
+        """
+        Menggambar diagram Voronoi pada canvas.
+        Termasuk:
+        - Sel-sel Voronoi (garis biru)
+        - Titik-titik input (lingkaran hitam)
+        - Vertex-vertex diagram (titik merah)
+        - Lingkaran kosong terbesar (garis oranye)
+        """
         self.canvas.delete(tk.ALL)
+        
+        # Menggambar sel-sel Voronoi
         for cell in self.diagram.cells:
             if cell.outer_component:
                 he = cell.outer_component
@@ -120,45 +152,51 @@ class MainWindow:
                         break
                 if points:
                     self.canvas.create_polygon(points, outline="blue", fill="", tags="voronoi")
+        
+        # Menggambar titik-titik input
         for point in self.points:
             self.canvas.create_oval(point.x - self.RADIUS, point.y - self.RADIUS, 
-                                    point.x + self.RADIUS, point.y + self.RADIUS, fill="black")
+                                  point.x + self.RADIUS, point.y + self.RADIUS, fill="black")
         
+        # Mempersiapkan KD-Tree untuk pencarian titik terdekat
         site_coords = [(point.x, point.y) for point in self.points]
         tree = KDTree(site_coords)
 
+        # Menggambar vertex-vertex
         for vertex in self.diagram.vertices:
-            print(vertex.x, vertex.y)
+            # print(vertex.x, vertex.y)
             self.canvas.create_oval(vertex.x - 1.5, vertex.y - 1.5, 
-                                    vertex.x + 1.5, vertex.y + 1.5, fill="red", outline="red", tags="vertex")
+                                  vertex.x + 1.5, vertex.y + 1.5, fill="red", outline="red", tags="vertex")
 
+        # Mencari dan menggambar lingkaran kosong terbesar
         centers = []
         radiuses = []
         max_radius = -1
         for vertex in self.diagram.vertices:
             vx, vy = vertex.x, vertex.y
             
+            # Mencari 5 titik terdekat untuk setiap vertex
             distances, indices = tree.query((vx, vy), k=5)  
             
             radius = distances[0]
             close_sites = [(site_coords[i][0], site_coords[i][1]) for i, d in zip(indices, distances) if abs(d - radius) < eps]
 
             if len(close_sites) >= 3:
-                # Draw the circle
                 centers.append((vx, vy))
                 radiuses.append(radius)
                 max_radius = max(radius, max_radius)
 
+        # Menggambar lingkaran kosong terbesar
         for i in range(len(centers)):
             radius = radiuses[i]
             if radius == max_radius:
                 vx = centers[i][0]
                 vy = centers[i][1]
                 self.canvas.create_oval(vx - radius, vy - radius, vx + radius, vy + radius,
-                                        outline="orange", tags="largest_empty_circle")
-
+                                     outline="orange", tags="largest_empty_circle")
             
 def main():
+    """Fungsi utama untuk menjalankan aplikasi."""
     root = tk.Tk()
     app = MainWindow(root)
     root.mainloop()

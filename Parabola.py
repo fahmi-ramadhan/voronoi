@@ -1,5 +1,4 @@
 import math
-from dataclasses import dataclass
 from Site import Site
 
 class Parabola:
@@ -54,46 +53,6 @@ class Parabola:
         c = (vx ** 2) / (4 * p) + vy
         
         return (a, b, c)
-    
-    def resolve(self, x: float) -> float:
-        """
-        Menghitung nilai y untuk nilai x yang diberikan pada parabola.
-        
-        Args:
-            x: Koordinat x yang akan dihitung nilai y-nya
-            
-        Returns:
-            Nilai y pada koordinat x yang diberikan
-        """
-        a, b, c = self.standard_form
-        y = a * (x * x) + b * x + c
-        return y
-    
-    def to_quad_bezier(self, min_x: float, max_x: float) -> tuple[Site, Site, Site]:
-        """
-        Mengkonversi segmen parabola menjadi kurva Bezier kuadratik.
-        
-        Metode ini mengkonversi bagian parabola yang dibatasi oleh min_x dan max_x
-        menjadi representasi kurva Bezier kuadratik yang setara.
-        
-        Args:
-            min_x: Batas kiri segmen parabola
-            max_x: Batas kanan segmen parabola
-            
-        Returns:
-            Tuple berisi (titik awal, titik kontrol, titik akhir) kurva Bezier
-        """
-        min_x, max_x = min(min_x, max_x), max(min_x, max_x)
-        
-        a, b, _ = self.standard_form
-        start = Site(x=min_x, y=self.resolve(min_x))
-        end = Site(x=max_x, y=self.resolve(max_x))
-        
-        cx = (min_x + max_x) / 2
-        cy = (max_x - min_x) / 2 * (2 * a * min_x + b) + self.resolve(min_x)
-        cp = Site(x=cx, y=cy)
-        
-        return (start, cp, end)
     
     def intersection_x(self, parabola: 'Parabola') -> float | None:
         """

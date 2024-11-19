@@ -7,7 +7,7 @@ from Rectangle import Rectangle
 from Diagram import Diagram, HalfEdge, Site, Cell
 from LiangBarsky import lb_clip
 
-class FortuneSweep:
+class FortunesAlgo:
     """
     Kelas ini mengimplementasikan algoritma Fortune's untuk menghasilkan diagram Voronoi.
     """
@@ -100,11 +100,18 @@ class FortuneSweep:
 
     def process_site_event(self, event: Event):
         """
-        Memproses site event yang terjadi saat garis penyapuan mencapai titik baru.
+        Memproses site event yang terjadi saat sweep line mencapai titik baru.
         
         Args:
-            event: Event yang berisi informasi titik yang akan diproses
+            event (Event): Site event yang berisi informasi titik yang akan diproses
+        
+        Menangani tiga kasus utama:
+        1. Titik pertama (beachline kosong)
+        2. Kasus degenerasi (titik dengan koordinat Y sama)
+        3. Penyisipan titik normal
         """
+
+        # Update posisi sweep line dan beachline
         self.sweep_line_y = event.point.y
         self.beachline.update_sweepline_y(self.sweep_line_y)
         
@@ -118,7 +125,7 @@ class FortuneSweep:
             return
         
         # Kasus khusus: titik dengan y yang sama dengan titik pertama
-        if self.first_site_y is not None and abs(self.first_site_y - self.sweep_line_y) < 1.0:
+        if self.first_site_y == self.sweep_line_y:
             self.container.expand_to_contain_point(event.point)
             y_val = -1000000
             arc = self.beachline.handle_special_arc_insertion_case(event.point)
@@ -147,30 +154,45 @@ class FortuneSweep:
         
         # Tangani kasus khusus dan normal untuk edge creation
         if is_special_case:
-            vertex = Circle.from_three_points(prev_arc.point, new_arc.point, next_arc.point).center
+            # Penyisipan kompleks di mana titik potong tepat sejajar
+            vertex = Circle.from_three_points(
+                prev_arc.point, new_arc.point, next_arc.point
+            ).center
+            
+            # Perbarui half-edge yang ada
             prev_arc.right_half_edge.origin = vertex
             next_arc.left_half_edge.destination = vertex
+            
+            # Buat half-edge baru
             lhe = self.diagram.create_half_edge(new_arc.cell)
             new_arc.left_half_edge = lhe
             lhe.origin = vertex
+            
             l_twin = self.diagram.create_half_edge(prev_arc.cell)
             l_twin.destination = vertex
             self.make_twins(lhe, l_twin)
+            
             rhe = self.diagram.create_half_edge(new_arc.cell)
             new_arc.right_half_edge = rhe
             rhe.destination = vertex
+            
             r_twin = self.diagram.create_half_edge(next_arc.cell)
             r_twin.origin = vertex
             self.make_twins(rhe, r_twin)
+            
+            # Sambungkan kembali half-edge
             self.connect(prev_arc.right_half_edge, lhe)
             self.connect(rhe, next_arc.left_half_edge)
+            
             prev_arc.right_half_edge = l_twin
             next_arc.left_half_edge = r_twin
         else:
             next_arc.cell = prev_arc.cell
             next_arc.right_half_edge = prev_arc.right_half_edge
+            
             prev_arc.right_half_edge = self.diagram.create_half_edge(prev_arc.cell)
             new_arc.left_half_edge = self.diagram.create_half_edge(new_arc.cell)
+            
             self.make_twins(prev_arc.right_half_edge, new_arc.left_half_edge)
             new_arc.right_half_edge = new_arc.left_half_edge
             next_arc.left_half_edge = prev_arc.right_half_edge

@@ -1,5 +1,4 @@
-from dataclasses import dataclass, field
-from typing import Any, Optional, List
+from typing import Optional, List
 from weakref import ref, ReferenceType
 from Beachline import Arc
 from Site import Site
@@ -58,9 +57,7 @@ class HalfEdge:
 
 class Cell:
     """
-    Menyimpan pointer ke:
-    - outerComponent linked list
-    - site - pointer to the site
+    Menyimpan pointer ke outerComponent linked list dan site
     """
     def __init__(self, site: Site):
         self.outer_component: Optional[HalfEdge] = None

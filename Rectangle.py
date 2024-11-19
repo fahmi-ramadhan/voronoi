@@ -3,8 +3,7 @@ from enum import Enum, auto
 from typing import List, Tuple, Optional, Dict
 from LiangBarsky import Clipper
 from Site import Site
-from Size import Size
-from Vector import Vector2D
+from Site import Vector2D
 from LineSegment import LineSegment
 
 class RectangleEdge(Enum):
@@ -32,25 +31,6 @@ class Rectangle:
     width: float
     height: float
     
-    @classmethod
-    def from_origin_and_size(cls, origin: 'Site', size: Size) -> 'Rectangle':
-        """
-        Membuat instance Rectangle dari titik origin dan ukuran.
-        
-        Args:
-            origin: Titik origin (pojok kiri atas)
-            size: Ukuran persegi panjang (lebar dan tinggi)
-            
-        Returns:
-            Instance Rectangle baru
-        """
-        return cls(
-            x=origin.x,
-            y=origin.y,
-            width=size.width,
-            height=size.height
-        )
-    
     @property
     def tl(self) -> 'Site':
         """Mendapatkan titik pojok kiri atas."""
@@ -75,11 +55,6 @@ class Rectangle:
     def origin(self) -> 'Site':
         """Mendapatkan titik origin (pojok kiri atas)."""
         return self.tl
-    
-    @property
-    def size(self) -> Size:
-        """Mendapatkan ukuran persegi panjang."""
-        return Size(width=self.width, height=self.height)
     
     def expand_to_contain_point(self, p: 'Site', padding: float = 20.0) -> None:
         """
@@ -121,20 +96,6 @@ class Rectangle:
             return LineSegment(a=self.bl, b=self.br)
         elif edge == RectangleEdge.LEFT:
             return LineSegment(a=self.tl, b=self.bl)
-            
-    def get_edges(self) -> List[LineSegment]:
-        """
-        Mendapatkan semua sisi persegi panjang sebagai segmen garis.
-        
-        Returns:
-            List segmen garis yang merepresentasikan semua sisi
-        """
-        return [
-            self.get_line(RectangleEdge.TOP),
-            self.get_line(RectangleEdge.LEFT),
-            self.get_line(RectangleEdge.RIGHT),
-            self.get_line(RectangleEdge.BOTTOM)
-        ]
     
     @classmethod
     def rect_from_source(cls, source_rect: 'Rectangle', padding: float) -> 'Rectangle':

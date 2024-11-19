@@ -27,7 +27,7 @@ class Event:
     """
     point: 'Site'
     kind: EventKind = EventKind.SITE
-    # Atribut berikut hanya digunakan untuk circle event
+    # Atribut untuk circle event
     arc: Optional['Arc'] = None
     circle: Optional['Circle'] = None
 

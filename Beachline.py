@@ -1,5 +1,5 @@
 from Parabola import Parabola
-from Precision import eps
+from Constant import eps
 
 class Arc:
     """
