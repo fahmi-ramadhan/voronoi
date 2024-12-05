@@ -6,6 +6,7 @@ from Event import Event, EventKind
 from Rectangle import Rectangle
 from Diagram import Diagram, HalfEdge, Site, Cell
 from LiangBarsky import lb_clip
+import heapq
 
 class FortunesAlgo:
     """
@@ -295,6 +296,7 @@ class FortunesAlgo:
         if arc and arc.event and arc.event.kind == EventKind.CIRCLE:
             if arc.event in self.event_queue.queue:
                 self.event_queue.queue.remove(arc.event)
+                heapq.heapify(self.event_queue.queue)  # Heapify the priority queue
             arc.event = None
 
     def terminate(self):
